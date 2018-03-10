@@ -1,4 +1,4 @@
-// case for my custom poker timer (uncomment individual parts to generate prints)
+// case for my custom poker timer (uncomment individual parts & Render to generate STL)
 
 // note: 0.1 inch is 2.54mm, my protoboards (buttons are on) have 0.1"
 // spacing, so handy to use that conversion to help calculate offsets
@@ -13,34 +13,34 @@ MAIN_RADIUS = 50; // radius of case
 
 RING_RADIUS = 50; // radius of the ring
 RING_WIDTH = 10; // width of the ring
-RING_HEIGHT = 1.6; // height of the ring
+RING_HEIGHT = 1.4; // height of the ring
 RING_PEG_HEIGHT = 15+RING_HEIGHT;
 
 PEG_RADIUS = 2;
 PEG_HOLE_RADIUS = PEG_RADIUS+0.1; // need a little extra for the holes to get the pegs to fit
-PEG_RES = 8; // octagon pegs + the 0.1mm extra in the holes seem to work good
+PEG_RES = 8; // octagon pegs + the 0.1mm extra radius in the holes seem to work good w/ my tests
 PEG_HOLE_RES = 36;
 
-BATTERY_HEIGHT = 20;
-BATTERY_PEG_HEIGHT = 7;
-
-ELECTRONICS_HEIGHT = 20;
-
-// not sure if I want just 4 cards or suits at the cardinal
-// directions, or text around it?  Oh, acually, can't use the aces
-// because of the border, that'll make the centers completely fall
-// out...so suits it is!  Might try the text later...
+// I'd like to put some Unicode playing card characters around the ring, but
+// can't because because of the border, that'll make the centers completely
+// fall out...so just the suits will work I guess.  Or some text (with a
+// stencil font, to keep the centers from falling out).
 ACES = "🂡🂱🃁🃑"; // why do these look different here in emacs than in the
-	        // openscad editor when I'm using the same font in both?
-DO_SUITS = 0;
+                // openscad editor when I'm using the same font in both?
 SUITS = "♠♥♦♣";
+SUIT_SIZE = 7;
+SUIT_FONT = "DejaVuSansMono";
+
+// set this to draw the suit glyphs, otherwise text
+DO_SUITS = 1;
+
 TEXT_TOP = "CHUCK'S CUSTOM";
 TEXT_BOTTOM = "POKER TIMER";
 TEXT_SIZE = 5;
-//font = "DejaVuSansMono";
-//font = "StardosStencil-Bold";
-FONT = "SirinStencil-Regular";
+TEXT_SPACING = 1.2;
 
+FONT = "StardosStencil-Bold";
+//FONT = "SirinStencil-Regular"; // I like this font, but it's too thin to work effectively unfortunately...
 
 module top_ring() {
   // drawing the ring using cylinder:
@@ -53,15 +53,14 @@ module top_ring() {
     // text_on_circle, so the extrusion is always centered on Z=0?
 
     if (DO_SUITS) {
-      TEXT_SIZE = TEXT_SIZE + 1; // bump the suit size up a little
       for (i = [0,1,2,3]) {
-        text_on_circle(t=SUITS[i],r=RING_RADIUS-RING_WIDTH/2,font=FONT,size=TEXT_SIZE,rotate=i*90,halign="center",valign="center",extrusion_height=RING_HEIGHT*4);
+        text_on_circle(t=SUITS[i],r=RING_RADIUS-RING_WIDTH/2,font=SUIT_FONT,size=SUIT_SIZE,rotate=i*90,halign="center",valign="center",extrusion_height=RING_HEIGHT*4);
       }
     } else {
       // text, backwards so it looks right when printed & used:
       rotate([0,180,0]){
-        text_on_circle(t=TEXT_TOP,r=RING_RADIUS-RING_WIDTH/2,font=FONT,size=TEXT_SIZE,spacing=1.2,valign="baseline",extrusion_height=RING_HEIGHT*4);
-        text_on_circle(t=TEXT_BOTTOM,r=RING_RADIUS-RING_WIDTH/2,font=FONT,size=TEXT_SIZE,spacing=1.2,valign="baseline",extrusion_height=RING_HEIGHT*4,ccw=true);
+        text_on_circle(t=TEXT_TOP,r=RING_RADIUS-RING_WIDTH/2,font=FONT,size=TEXT_SIZE,spacing=TEXT_SPACING,valign="baseline",extrusion_height=RING_HEIGHT*4);
+        text_on_circle(t=TEXT_BOTTOM,r=RING_RADIUS-RING_WIDTH/2,font=FONT,size=TEXT_SIZE,spacing=TEXT_SPACING,valign="baseline",extrusion_height=RING_HEIGHT*4,ccw=true);
       }
     }
 
@@ -173,13 +172,20 @@ module back_plate() {
   }
 }
 
+ELECTRONICS_HEIGHT = 17;
+ELECTRONICS_RING_WIDTH = 1.6;
+
 module electronics_compartment() {
   difference() {
     cylinder(r = RING_RADIUS, h = ELECTRONICS_HEIGHT);
-    // add pegs for holes
-    draw_pegs(ELECTRONICS_HEIGHT,PEG_HOLE_RADIUS,0,PEG_HOLE_RES);
     // cut out the middle, but leave some room
-    cylinder(r = RING_RADIUS - RING_WIDTH, h = ELECTRONICS_HEIGHT*4,center=true); 
+    cylinder(r = RING_RADIUS - ELECTRONICS_RING_WIDTH, h = ELECTRONICS_HEIGHT*4,center=true); 
+  }
+  // put in posts w/ holes for pegs:
+  difference() {
+    draw_pegs(ELECTRONICS_HEIGHT,PEG_RADIUS*2,0,PEG_HOLE_RES);
+    // holes
+    draw_pegs(ELECTRONICS_HEIGHT,PEG_HOLE_RADIUS,0,PEG_HOLE_RES);
   }
   // now the bottom plate:
   difference() {
@@ -191,21 +197,28 @@ module electronics_compartment() {
   }
 }
 
+BATTERY_RING_WIDTH = 1.6;
+BATTERY_HEIGHT = 20;
+BATTERY_PEG_HEIGHT = 7;
+
 module battery_compartment() {
   difference() {
     cylinder(r = RING_RADIUS, h = BATTERY_HEIGHT);
     // cut out the middle
-    cylinder(r = RING_RADIUS - RING_WIDTH, h = BATTERY_HEIGHT*4,center=true); 
+    cylinder(r = RING_RADIUS - BATTERY_RING_WIDTH, h = BATTERY_HEIGHT*4,center=true); 
   }
   // now the bottom plate:
   cylinder(r = RING_RADIUS, h = 2);
+  // and peg supports + pegs:
+  draw_pegs(BATTERY_HEIGHT,PEG_RADIUS*2,0,PEG_HOLE_RES);
   draw_pegs(BATTERY_PEG_HEIGHT,PEG_RADIUS,BATTERY_HEIGHT-1,PEG_RES);
 }
 
-// for a "big display" in one image, set SHOW_OFF to 1, otherwise uncomment a
-// part at a time in the next section, render, and generate STL files for each
-// part...
-SHOW_OFF = 1;
+// for a "big display" (to create an overview image, for example), set
+// SHOW_OFF to 1, otherwise uncomment a part at a time in the next section,
+// render, and generate STL files for each part...
+SHOW_OFF = 0;
+
 if (SHOW_OFF) {
   translate([0,0,110]) {
     rotate([0,180,0]) {
