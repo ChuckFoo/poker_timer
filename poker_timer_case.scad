@@ -214,10 +214,12 @@ module battery_compartment() {
   draw_pegs(BATTERY_PEG_HEIGHT,PEG_RADIUS,BATTERY_HEIGHT-1,PEG_RES);
 }
 
+// 3x button covers...10mm diameter, 3.4mm diameter hole?
+
 // for a "big display" (to create an overview image, for example), set
 // SHOW_OFF to 1, otherwise uncomment a part at a time in the next section,
 // render, and generate STL files for each part...
-SHOW_OFF = 0;
+SHOW_OFF = 1;
 
 if (SHOW_OFF) {
   translate([0,0,110]) {
@@ -239,6 +241,8 @@ if (SHOW_OFF) {
   translate([0,0,0]) {
     color("White") battery_compartment();
   }
+  // add button covers positioned over the 3 square button holes in the face
+  // plate...  start/pause red?  Or all white?
 } else {
   // uncomment part to create:
 
@@ -247,6 +251,7 @@ if (SHOW_OFF) {
   //back_plate();
   //electronics_compartment();
   //battery_compartment();
+  //button_covers();
 
 }
 
